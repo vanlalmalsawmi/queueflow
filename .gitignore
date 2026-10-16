@@ -1,0 +1,7 @@
+
+venv/
+__pycache__/
+*.pyc
+queueflow.db
+app_backup.txt
+.env

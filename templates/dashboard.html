@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | QueueFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-page">
+
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">Q</div>
+            <div>
+                <h2>QueueFlow</h2>
+                <p>QUEUE MANAGEMENT SYSTEM</p>
+            </div>
+        </div>
+
+        <div class="user-area">
+            <span>Welcome, <strong>{{ username }}</strong></span>
+            <a class="logout-button" href="{{ url_for('logout') }}">Log out</a>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">OVERVIEW</p>
+                <h1>Queue Dashboard</h1>
+                <p class="subtitle">Manage visitors and keep the line moving.</p>
+            </div>
+            <span class="active-badge">● System Active</span>
+        </section>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <p>People Waiting</p>
+                <h2>{{ waiting|length }}</h2>
+                <span>Currently in the queue</span>
+            </article>
+
+            <article class="stat-card">
+                <p>Now Serving</p>
+                <h2>
+                    {% if served %}
+                        #{{ served.ticket_number }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </h2>
+                <span>Most recently served ticket</span>
+            </article>
+
+            <article class="stat-card">
+                <p>People Served</p>
+                <h2>{{ served_count }}</h2>
+                <span>Total served by your account</span>
+            </article>
+        </section>
+
+        <section class="main-grid">
+
+            <article class="panel">
+                <p class="eyebrow">NEW VISITOR</p>
+                <h2>Add to Queue</h2>
+                <p class="panel-description">
+                    Enter a visitor's name to create a ticket.
+                </p>
+
+                <form method="POST" action="{{ url_for('add_visitor') }}">
+                    <label for="visitor_name">Visitor Name</label>
+                    <input
+                        type="text"
+                        id="visitor_name"
+                        name="visitor_name"
+                        placeholder="e.g. Alex Morgan"
+                        maxlength="100"
+                        required
+                    >
+
+                    <button class="primary-button" type="submit">
+                        + Join Queue
+                    </button>
+                </form>
+
+                <div class="info-note">
+                    <strong>Enqueue operation</strong>
+                    <p>New visitors join at the end of the queue.</p>
+                </div>
+            </article>
+
+            <article class="panel">
+                <p class="eyebrow">NEXT IN LINE</p>
+                <h2>Serve Visitors</h2>
+                <p class="panel-description">
+                    Serve the person who has waited the longest.
+                </p>
+
+                {% if waiting %}
+                    <div class="next-person">
+                        <div class="ticket-icon">
+                            #{{ waiting[0].ticket_number }}
+                        </div>
+                        <div>
+                            <strong>{{ waiting[0].visitor_name }}</strong>
+                            <p>First in line</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-message">
+                        <strong>No one is waiting</strong>
+                        <p>Add a visitor to get started.</p>
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('serve_next') }}">
+                    <button
+                        class="serve-button"
+                        type="submit"
+                        {% if not waiting %}disabled{% endif %}
+                    >
+                        ✓ Serve Next Person
+                    </button>
+                </form>
+
+                <div class="info-note green-note">
+                    <strong>Dequeue operation</strong>
+                    <p>The first waiting visitor is served first.</p>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="panel queue-panel">
+            <div class="queue-heading">
+                <div>
+                    <p class="eyebrow">LIVE QUEUE</p>
+                    <h2>Waiting List ({{ waiting|length }})</h2>
+                    <p class="panel-description">
+                        Visitors are displayed in the order they joined.
+                    </p>
+                </div>
+            </div>
+
+            {% if waiting %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TICKET</th>
+                                <th>VISITOR</th>
+                                <th>POSITION</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visitor in waiting %}
+                                <tr>
+                                    <td>
+                                        <span class="ticket-badge">
+                                            #{{ visitor.ticket_number }}
+                                        </span>
+                                    </td>
+                                    <td>{{ visitor.visitor_name }}</td>
+                                    <td>{{ loop.index }}</td>
+                                    <td><span class="waiting-badge">Waiting</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-message">
+                    <strong>Your queue is empty</strong>
+                    <p>Add a visitor above to see them here.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="panel concept-panel">
+            <p class="eyebrow">DSL CONCEPT</p>
+            <h2>How the Queue Works</h2>
+            <div class="fifo-demo">
+                <span>FRONT</span>
+                <div>A</div>
+                <div>B</div>
+                <div>C</div>
+                <span>REAR</span>
+            </div>
+            <h3>FIFO — First In, First Out</h3>
+            <p>
+                The first visitor who joins is the first visitor served.
+                This makes the queue fair and organized.
+            </p>
+        </section>
+
+        <footer>
+            QueueFlow · DSL Mini Project
+            <span>Built with Python, Flask and SQLite</span>
+        </footer>
+
+    </main>
+
+</body>
+</html>
